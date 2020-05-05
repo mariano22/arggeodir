@@ -112,12 +112,13 @@ def ciudades_cordoba_gdf():
     gdf = gdf.rename(columns={'NOMLOC_10':'LOCATION'})
     gdf['DEPARTAMENTO']=gdf['NOM_DEPTO'].apply(normalize_str)
     gdf['LOCATION']=gdf['LOCATION'].apply(normalize_str)
-    gdf['LOCATION']='ARGENTINA/CORDOBA/'+gdf['DEPARTAMENTO']+'/'+gdf['LOCATION']
-    gdf = gdf[['LOCATION','geometry']]
     gdf=gdf.replace({
+        'SAN MARCOS SIERRA': 'SAN MARCOS SIERRAS',
         'SAN MARCOS': 'SAN MARCOS SUD',
         'PTE ROQUE SAENZ PENA': 'PRESIDENTE ROQUE SAENZ PENA',
     })
+    gdf['LOCATION']='ARGENTINA/CORDOBA/'+gdf['DEPARTAMENTO']+'/'+gdf['LOCATION']
+    gdf = gdf[['LOCATION','geometry']]
     return gdf
 
 """ Functions that constructs DataFrame with LOCATION,POPULATION,AREA """
