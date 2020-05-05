@@ -15,6 +15,7 @@ GEOJSON_COUNTRIES   = os.path.join(IN_DATA_FILES_FOLDER,'countries.geojson')
 GEOJSON_PROVINCES   = os.path.join(IN_DATA_FILES_FOLDER,'provincias_argentina.geojson')
 GEOJSON_DEPARTMENTS = os.path.join(IN_DATA_FILES_FOLDER,'departamentos-argentina.json')
 GEOJSON_BARRIOS     = os.path.join(IN_DATA_FILES_FOLDER,'barrios.geojson')
+GEOJSON_CIUDADES_CORDOBA = os.path.join(IN_DATA_FILES_FOLDER,'cordoba/ciudades_cordoba.shp')
 
 # Wiki csv with area,population info
 INFO_COUNTRIES_FILE           = os.path.join(IN_DATA_FILES_FOLDER,'countries.csv')
@@ -106,6 +107,18 @@ def ciudades_sante_fe_gdf(df_info):
     gdf = gpd.GeoDataFrame(df_info.reset_index(), geometry=gpd.points_from_xy(df_info.LONG, df_info.LAT))
     gdf=gdf[['LOCATION','geometry']]
     return gdf
+def ciudades_cordoba_gdf():
+    gdf = gpd.read_file(GEOJSON_CIUDADES_CORDOBA)
+    gdf = gdf.rename(columns={'NOMLOC_10':'LOCATION'})
+    gdf['DEPARTAMENTO']=gdf['NOM_DEPTO'].apply(normalize_str)
+    gdf['LOCATION']=gdf['LOCATION'].apply(normalize_str)
+    gdf['LOCATION']='ARGENTINA/CORDOBA/'+gdf['DEPARTAMENTO']+'/'+gdf['LOCATION']
+    gdf = gdf[['LOCATION','geometry']]
+    gdf=gdf.replace({
+        'SAN MARCOS': 'SAN MARCOS SUD',
+        'PTE ROQUE SAENZ PENA': 'PRESIDENTE ROQUE SAENZ PENA',
+    })
+    return gdf
 
 """ Functions that constructs DataFrame with LOCATION,POPULATION,AREA """
 
@@ -191,6 +204,12 @@ def ciudades_sante_fe_info():
     df_info['AREA']=math.nan
     return df_info
 
+def ciudades_cordoba_info(gdf_ciudades_cordoba):
+    df = centroid_gdf(gdf_ciudades_cordoba)
+    df['AREA']=math.nan
+    df['POPULATION']=math.nan
+    return df
+
 if __name__ == '__main__':
     print('Getting all geojsons...')
     gdf_paises = countries_gdf()
@@ -201,6 +220,7 @@ if __name__ == '__main__':
     gdf_prov.loc['ARGENTINA/BUENOS AIRES','geometry']=new_buenos_aires
     gdf_prov = gdf_prov.reset_index()
     gdf_barrios = barrios_gdf()
+    gdf_ciudades_cordoba = ciudades_cordoba_gdf()
 
     print('Calculating centroids...')
     coords_paises = centroid_gdf(gdf_paises)
@@ -253,17 +273,19 @@ if __name__ == '__main__':
     print('    - Santa Fe ciudades INFO...')
     df_ciudades_stafe = ciudades_sante_fe_info()
 
+    print('    - Cordoba ciudades INFO...')
+    df_ciudades_cordoba = ciudades_cordoba_info(gdf_ciudades_cordoba)
 
     print('Constructing geojson for Santa Fe cities...')
     gdf_ciudades_stafe = ciudades_sante_fe_gdf(df_ciudades_stafe)
 
 
     print('Joining all INFO in one file...')
-    df_general = pd.concat([df_paises, df_prov, df_dep, df_barrios, df_ciudades_stafe])
+    df_general = pd.concat([df_paises, df_prov, df_dep, df_barrios, df_ciudades_stafe, df_ciudades_cordoba])
     df_general.to_csv(INFO_OUT)
 
     print('Joining all geojson in one...')
-    gdf_general = gpd.GeoDataFrame( pd.concat( [gdf_paises,gdf_prov,gdf_dep,gdf_barrios,gdf_ciudades_stafe], ignore_index=True) )
+    gdf_general = gpd.GeoDataFrame( pd.concat( [gdf_paises,gdf_prov,gdf_dep,gdf_barrios,gdf_ciudades_stafe,gdf_ciudades_cordoba], ignore_index=True) )
     gdf_general.to_file(GEOJSON_OUT, driver='GeoJSON')
 
     print('DONE!')
