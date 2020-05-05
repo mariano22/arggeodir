@@ -109,6 +109,7 @@ def ciudades_sante_fe_gdf(df_info):
     return gdf
 def ciudades_cordoba_gdf():
     gdf = gpd.read_file(GEOJSON_CIUDADES_CORDOBA)
+    gdf=gdf[~gdf['LATITUD'].isna() & ~gdf['LONGITUD'].isna()]
     gdf = gdf.rename(columns={'NOMLOC_10':'LOCATION'})
     gdf['DEPARTAMENTO']=gdf['NOM_DEPTO'].apply(normalize_str)
     gdf['LOCATION']=gdf['LOCATION'].apply(normalize_str)
@@ -118,6 +119,17 @@ def ciudades_cordoba_gdf():
         'PTE ROQUE SAENZ PENA': 'PRESIDENTE ROQUE SAENZ PENA',
     })
     gdf['LOCATION']='ARGENTINA/CORDOBA/'+gdf['DEPARTAMENTO']+'/'+gdf['LOCATION']
+
+    def _proc_angle(str_angle):
+        if str_angle is None:
+            return str_angle
+        angle_list = str_angle.split(' ')
+        assert len(angle_list)==3
+        return float(angle_list[0])+float(angle_list[1])/60+float(angle_list[2])/3600
+    gdf['LAT']=-gdf['LATITUD'].apply(_proc_angle)
+    gdf['LONG']=-gdf['LONGITUD'].apply(_proc_angle)
+    gdf.geometry = gpd.points_from_xy(gdf.LONG, gdf.LAT)
+
     gdf = gdf[['LOCATION','geometry']]
     return gdf
 
