@@ -27,7 +27,7 @@ INFO_CIUDADES_SANTA_FE_FILE   = os.path.join(IN_DATA_FILES_FOLDER,'poblacion_ciu
 COORDS_CIUDADES_SANTE_FE_FILE = os.path.join(IN_DATA_FILES_FOLDER, 'localidades-y-parajes.csv')
 
 # Produced files with LOCATION (hierarchical) maps and info
-GEOJSON_OUT = os.path.join(OUT_DATA_FILES_FOLDER,'maps_general.geosjon')
+GEOJSON_OUT = os.path.join(OUT_DATA_FILES_FOLDER,'maps_general.geojson')
 INFO_OUT    = os.path.join(OUT_DATA_FILES_FOLDER,'info_general.csv')
 
 """ Auxiliar functions """
