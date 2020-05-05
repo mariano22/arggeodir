@@ -196,6 +196,10 @@ if __name__ == '__main__':
     gdf_paises = countries_gdf()
     gdf_dep = departments_gdf()
     gdf_prov = gpd.GeoDataFrame( pd.concat([provinces_gdf(),gdf_caba(gdf_dep)], ignore_index=True) )
+    gdf_prov = gdf_prov.set_index('LOCATION')
+    new_buenos_aires = gdf_prov.loc['ARGENTINA/BUENOS AIRES','geometry'].difference(gdf_prov.loc['ARGENTINA/CABA','geometry'])
+    gdf_prov.loc['ARGENTINA/BUENOS AIRES','geometry']=new_buenos_aires
+    gdf_prov = gdf_prov.reset_index()
     gdf_barrios = barrios_gdf()
 
     print('Calculating centroids...')
