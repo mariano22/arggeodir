@@ -16,6 +16,7 @@ GEOJSON_PROVINCES   = os.path.join(IN_DATA_FILES_FOLDER,'provincias_argentina.ge
 GEOJSON_DEPARTMENTS = os.path.join(IN_DATA_FILES_FOLDER,'departamentos-argentina.json')
 GEOJSON_BARRIOS     = os.path.join(IN_DATA_FILES_FOLDER,'barrios.geojson')
 GEOJSON_CIUDADES_CORDOBA = os.path.join(IN_DATA_FILES_FOLDER,'cordoba/ciudades_cordoba.shp')
+GEOJSON_URUGUAY = os.path.join(IN_DATA_FILES_FOLDER,'uruguay.geojson')
 
 # Wiki csv with area,population info
 INFO_COUNTRIES_FILE           = os.path.join(IN_DATA_FILES_FOLDER,'countries.csv')
@@ -24,6 +25,7 @@ INFO_DEPARTMENTS_FILE         = os.path.join(IN_DATA_FILES_FOLDER,'departamentos
 INFO_COMUNAS_FILE             = os.path.join(IN_DATA_FILES_FOLDER,'caba_comunas.csv')
 INFO_BARRIOS_FILE             = os.path.join(IN_DATA_FILES_FOLDER,'barrios.csv')
 INFO_CIUDADES_SANTA_FE_FILE   = os.path.join(IN_DATA_FILES_FOLDER,'poblacion_ciudades_santa_fe.csv')
+INFO_URUGUAY = os.path.join(IN_DATA_FILES_FOLDER,'uruguay.csv')
 
 COORDS_CIUDADES_SANTE_FE_FILE = os.path.join(IN_DATA_FILES_FOLDER, 'localidades-y-parajes.csv')
 
@@ -132,6 +134,11 @@ def ciudades_cordoba_gdf():
 
     gdf = gdf[['LOCATION','geometry']]
     return gdf
+def uruguay_gdf():
+    gdf = gpd.read_file(GEOJSON_URUGUAY)
+    gdf['LOCATION']=gdf['NAME_1'].apply(lambda x: 'URUGUAY/'+normalize_str(x))
+    gdf=gdf[['LOCATION','geometry']]
+    return gdf
 
 """ Functions that constructs DataFrame with LOCATION,POPULATION,AREA """
 
@@ -223,7 +230,13 @@ def ciudades_cordoba_info(gdf_ciudades_cordoba):
     df['POPULATION']=math.nan
     return df
 
-if __name__ == '__main__':
+def uruguay_info():
+    df  = pd.read_csv(INFO_URUGUAY)
+    df['LOCATION']=df['LOCATION'].apply(lambda x: 'URUGUAY/'+normalize_str(x))
+    df = df.set_index('LOCATION')
+    return df
+
+def main():
     print('Getting all geojsons...')
     gdf_paises = countries_gdf()
     gdf_dep = departments_gdf()
@@ -234,6 +247,7 @@ if __name__ == '__main__':
     gdf_prov = gdf_prov.reset_index()
     gdf_barrios = barrios_gdf()
     gdf_ciudades_cordoba = ciudades_cordoba_gdf()
+    gdf_uruguay = uruguay_gdf()
 
     print('Calculating centroids...')
     coords_paises = centroid_gdf(gdf_paises)
@@ -241,8 +255,9 @@ if __name__ == '__main__':
     assert(len(coords_prov)==24)
     coords_dep = centroid_gdf(gdf_dep)
     coords_barrios = centroid_gdf(gdf_barrios)
+    coords_uruguay = centroid_gdf(gdf_uruguay)
 
-    coords = pd.concat( [coords_paises,coords_prov,coords_dep,coords_barrios] )
+    coords = pd.concat( [coords_paises,coords_prov,coords_dep,coords_barrios, coords_uruguay] )
 
 
     print('Construct info DataFrames with checks and add centroids...')
@@ -289,16 +304,26 @@ if __name__ == '__main__':
     print('    - Cordoba ciudades INFO...')
     df_ciudades_cordoba = ciudades_cordoba_info(gdf_ciudades_cordoba)
 
+    print('    - Uruguay INFO...')
+    df_uruguay = uruguay_info()
+    assert set(df_uruguay.index)==(set(coords_uruguay.index))
+    assert set(df_uruguay.index)==(set(gdf_uruguay['LOCATION']))
+    assert(len(df_uruguay)==19)
+    df_uruguay = pd.merge(coords_uruguay,df_uruguay,left_index=True,right_index=True,how='outer')
+
     print('Constructing geojson for Santa Fe cities...')
     gdf_ciudades_stafe = ciudades_sante_fe_gdf(df_ciudades_stafe)
 
 
     print('Joining all INFO in one file...')
-    df_general = pd.concat([df_paises, df_prov, df_dep, df_barrios, df_ciudades_stafe, df_ciudades_cordoba])
+    df_general = pd.concat([df_paises, df_prov, df_dep, df_barrios, df_ciudades_stafe, df_ciudades_cordoba, df_uruguay])
     df_general.to_csv(INFO_OUT)
 
     print('Joining all geojson in one...')
-    gdf_general = gpd.GeoDataFrame( pd.concat( [gdf_paises,gdf_prov,gdf_dep,gdf_barrios,gdf_ciudades_stafe,gdf_ciudades_cordoba], ignore_index=True) )
+    gdf_general = gpd.GeoDataFrame( pd.concat( [gdf_paises,gdf_prov,gdf_dep,gdf_barrios,gdf_ciudades_stafe,gdf_ciudades_cordoba,gdf_uruguay], ignore_index=True) )
     gdf_general.to_file(GEOJSON_OUT, driver='GeoJSON')
 
     print('DONE!')
+
+if __name__ == '__main__':
+    main()
