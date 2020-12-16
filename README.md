@@ -5,11 +5,11 @@ Repositorio con información de Argentina organizada jerárquicamente:
 - <code>maps_general.geojson</code>: geoshapes por jerarquía.
 - <code>ingo_general.csv</code>: área, superficie, centroide por jerarquía.
 
-<code>generator.py</code> genera los archivos basado en <code>./data_in/*.csv/geojson</code>  (área, superficie y geoshapes de Censo 2010).
+<code>generator.py</code> genera los archivos basados en <code>./data_in/*.csv/geojson</code>  (área, superficie y geoshapes de Censo 2010).
 
 ## Idea repositorio
 
-La idea original del repositorio fue organizar la información (como tablas de Wikipedia o geoshapes) de manera jerárquica e incluir toda la información en un archivo aprovechando el hecho que en las divisiones geográfica suele haber jerarquía de regiones.
+La idea original del repositorio fue organizar la información (como tablas de Wikipedia o geoshapes) de manera jerárquica e incluir toda la información en un archivo aprovechando el hecho que en las divisiones geográficas suele haber jerarquía de regiones.
 
 Esto permite trabajar de manera natural con las regiones como si fueran estructuras de directorios que vemos a diario.
 
